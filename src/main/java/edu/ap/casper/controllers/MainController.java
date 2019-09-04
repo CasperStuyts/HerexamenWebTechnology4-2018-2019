@@ -1,40 +1,57 @@
 package edu.ap.casper.controllers;
 
-import edu.ap.casper.model.EightBallAnswer;
+import edu.ap.casper.EightBallRepository;
+import edu.ap.casper.model.EightBall;
 import edu.ap.casper.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.swing.text.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @RestController
-public class MainController implements WebMvcConfigurer {
-    private RedisService service; // pattern : "exams":exam:student:reason:date
+public class MainController {
+
+
 
     @Autowired
-    public void setRedisService(RedisService service) {
-        this.service = service;
-    }
-    @RequestMapping("/listAll")
+    private EightBallRepository eightBallRepository;
+    private RedisService service;
+    private String[] answerOptions = {"It is certain",
+            "It is decidedly so",
+            "Without a doubt",
+            "Yes - definitely",
+            "You may rely on it",
+            "As I see it, yes",
+            "Most likely",
+            "Outlook good",
+            "Yes", "Signs point to yes",
+            "Don't count on it",
+            "My reply is no",
+            "My sources say no",
+            "Outlook not so good",
+            "Very doubtful",
+            "Reply hazy, try again",
+            "Ask again later",
+            "Better not tell you now",
+            "Cannot predict now",
+            "Concentrate and ask again"};
+
+    @RequestMapping("/getanswer")
     @ResponseBody
     public String giveAnswer(){
-        List<EightBallAnswer> eightBallAnswers = new ArrayList<>();
-        Set<String> keys = service.keys("eightBallAnswers:*");
+        List<EightBall> eightBalls= new ArrayList<>();
+        Set<String> keys = service.keys("question:*");
         for(String key : keys) {
             String[] parts = key.split(":");
-            eightBallAnswers.add(new EightBallAnswer(parts[1]));
+            eightBalls.add(new EightBall(parts[1],parts[2]));
         }
         StringBuilder b = new StringBuilder();
         b.append("<html><body><table>");
-        b.append("<tr><th>Datum</th><th>Student</th><th>Examen</th><th>Reden</th></tr>");
+        b.append("<tr><th>Answer</th></tr>");
 
-        for(EightBallAnswer ex : eightBallAnswers) {
+        for(EightBall ex : eightBalls) {
             b.append("<tr>");
             b.append("<td>");
             b.append(ex.getAnswer());
@@ -47,6 +64,22 @@ public class MainController implements WebMvcConfigurer {
     }
 
 
+    @PostMapping(value = "/new")
+    @ResponseBody
+    public String addExam(@RequestParam(value = "question") String question) {
+
+        EightBall e = new EightBall(answerOptions[question.length()],question);
+        /* check of het bestaat */
+
+        for(EightBall in : this.eightBallRepository.getAll()) {
+            if(in.getAnswer().equalsIgnoreCase(e.getAnswer()) && in.getQuestion().equalsIgnoreCase(e.getQuestion())) {
+                return "<html>BESTAAT AL</html>";
+            }
+        }
+        this.eightBallRepository.saveQuestion(e);
+        return giveAnswer();
+    }
+
     @RequestMapping("/question")
     @ResponseBody
     public String addForm() {
@@ -57,7 +90,7 @@ public class MainController implements WebMvcConfigurer {
                 "<link rel='stylesheet' href='/resources/css/bootstrap.min.css'>\r\n" +
                 "<script type='text/javascript' src='/resources/js/app.js'></script>\r\n" +
                 "\r\n" +
-                "<title>Inhaal examen</title>\r\n" +
+                "<title>Magic Eightball</title>\r\n" +
                 "</head>\r\n" +
                 "\r\n" +
                 "<body>\r\n" +
@@ -78,7 +111,7 @@ public class MainController implements WebMvcConfigurer {
                 "</form>\r\n" +
                 "\r\n" +
                 "<br/><br/>\r\n" +
-                
+
                 "</div>\r\n" +
                 "\r\n" +
                 "</body>\r\n" +
