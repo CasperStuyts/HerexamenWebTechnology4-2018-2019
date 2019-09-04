@@ -20,6 +20,6 @@ public class EightBallRepository {
 
         return EightBallAnswerRedisTemplate.boundListOps("question").range(0,- 1);
     }
-    
+
 }
 

@@ -17,8 +17,8 @@ public class MainController {
 
     @Autowired
     private EightBallRepository eightBallRepository;
-    private RedisService service;
-    private String[] answerOptions = {"It is certain",
+    private EightBall e;
+    String[] answerOptions={"It is certain",
             "It is decidedly so",
             "Without a doubt",
             "Yes - definitely",
@@ -38,28 +38,30 @@ public class MainController {
             "Cannot predict now",
             "Concentrate and ask again"};
 
+    private ArrayList<String> answersGiven = new ArrayList<>();
+
     @RequestMapping("/getanswer")
     @ResponseBody
     public String giveAnswer(){
-        List<EightBall> eightBalls= new ArrayList<>();
-        Set<String> keys = service.keys("question:*");
-        for(String key : keys) {
-            String[] parts = key.split(":");
-            eightBalls.add(new EightBall(parts[1],parts[2]));
-        }
-        StringBuilder b = new StringBuilder();
-        b.append("<html><body><table>");
-        b.append("<tr><th>Answer</th></tr>");
+        List<EightBall> eightBalls= this.eightBallRepository.getAll();
+        StringBuilder b=new StringBuilder();
+        for(EightBall in : this.eightBallRepository.getAll()) {
+            if(in.getAnswer().equalsIgnoreCase(e.getAnswer()) && in.getQuestion().equalsIgnoreCase(e.getQuestion())) {
 
-        for(EightBall ex : eightBalls) {
-            b.append("<tr>");
-            b.append("<td>");
-            b.append(ex.getAnswer());
-            b.append("</td>");
-            b.append("</tr>");
-        }
-        b.append("</table></body></html>");
+                b.append("<html><body><table>");
+                b.append("<tr><th>Answer</th></tr>");
 
+
+                    b.append("<tr>");
+                    b.append("<td>");
+                    b.append(e.getAnswer());
+                    b.append("</td>");
+                    b.append("</tr>");
+
+                b.append("</table></body></html>");
+            }
+
+    }
         return b.toString();
     }
 
@@ -68,15 +70,25 @@ public class MainController {
     @ResponseBody
     public String addExam(@RequestParam(value = "question") String question) {
 
-        EightBall e = new EightBall(answerOptions[question.length()],question);
+       e = new EightBall(answerOptions[question.length()],question);
         /* check of het bestaat */
 
         for(EightBall in : this.eightBallRepository.getAll()) {
             if(in.getAnswer().equalsIgnoreCase(e.getAnswer()) && in.getQuestion().equalsIgnoreCase(e.getQuestion())) {
-                return "<html>BESTAAT AL</html>";
+                StringBuilder b = new StringBuilder();
+                b.append("<html><body><table>");
+                b.append("<tr><th>Answer</th></tr>");
+                b.append("<tr>");
+                b.append("<td>");
+                b.append(in.getAnswer());
+                b.append("</td>");
+                b.append("</tr>");
+                b.append("</table></body></html>");
+                return b.toString();
             }
         }
         this.eightBallRepository.saveQuestion(e);
+        
         return giveAnswer();
     }
 

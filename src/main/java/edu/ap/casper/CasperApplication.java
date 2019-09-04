@@ -1,6 +1,7 @@
 package edu.ap.casper;
 
 import edu.ap.casper.model.EightBall;
+import edu.ap.casper.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -60,9 +61,9 @@ public class CasperApplication {
     public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
         return (args) -> {
 
-			EightBallAnswerRedisTemplate.saveQuestion(new EightBall("test","test"));
-            EightBallAnswerRedisTemplate.saveQuestion(new EightBall("test2","test"));
-            EightBallAnswerRedisTemplate.saveQuestion(new EightBall("test5","test"));
+			//EightBallAnswerRedisTemplate.saveQuestion(new EightBall("test","test"));
+           // EightBallAnswerRedisTemplate.saveQuestion(new EightBall("test2","test"));
+            //EightBallAnswerRedisTemplate.saveQuestion(new EightBall("test5","test"));
             EightBallAnswerRedisTemplate.getAll().forEach(s -> System.out.println(s.getAnswer()));
 
         };
